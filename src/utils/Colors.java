@@ -18,6 +18,6 @@ public class Colors {
     
     // Feedback & Special Actions
     public static final Color ACTION_BLUE  = new Color(45, 125, 240);  // Bright blue for "Play Notes" / "Next"
-    public static final Color CORRECT_GREEN= new Color(40, 167, 69); 
+    public static final Color CORRECT_GREEN = new Color(40, 167, 69); 
     public static final Color WRONG_RED    = new Color(220, 53, 69);  
 }

@@ -16,7 +16,7 @@ public class PercentBounds {
      * @param wPct Width (0.0 to 100.0)
      * @param hPct Height (0.0 to 100.0)
      */
-    public static void set(Component comp, double xPct, double yPct, double wPct, double hPct) {
+    public static void setRelative(Component comp, double xPct, double yPct, double wPct, double hPct) {
     	Container parent = comp.getParent();
         
         int pW = (parent != null) ? parent.getWidth() : 0;
@@ -38,5 +38,12 @@ public class PercentBounds {
         
 
         comp.setBounds(x, y, w, h);
+    }
+    
+    /**
+     * Sets centered properties of a component
+     */
+    public static void setAbsolute(Component comp, double x, double y, double w, double h) {
+        comp.setBounds((int)x - (int)w / 2, (int)y - (int)h / 2, (int)w, (int)h);
     }
 }

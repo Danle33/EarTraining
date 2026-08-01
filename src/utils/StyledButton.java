@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class StyledButton extends JButton implements RelativeComponent{
+public class StyledButton extends JButton implements RelativeComponent {
     private Color currentBg = Colors.BTN_DEFAULT;
     private Color normalBg = Colors.BTN_DEFAULT;
     private Color hoverBg = Colors.BTN_HOVER;
@@ -40,6 +40,10 @@ public class StyledButton extends JButton implements RelativeComponent{
         });
     }
     
+    public void disableHoverPainting() {
+    	hoverBg = normalBg;
+    }
+    
     public void setFontSize(int fontSize) {
     	setFont(new Font("SansSerif", Font.BOLD, fontSize));
     }
@@ -58,6 +62,10 @@ public class StyledButton extends JButton implements RelativeComponent{
     public void markCorrect() {
         this.currentBg = Colors.CORRECT_GREEN;
         repaint();
+    }
+    
+    public boolean markedCorrect() {
+    	return this.currentBg == Colors.CORRECT_GREEN;
     }
 
     /** Flash wrong red */

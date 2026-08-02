@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 
 public class IntervalsPanel extends JPanel {
@@ -77,7 +78,10 @@ public class IntervalsPanel extends JPanel {
         add(lblScore);
 
         btnPlay.addActionListener(e -> {
-            // mainFrame.showScreen(new IntervalPanel(mainFrame));
+        	SoundHandler.AudioSample targetNote = SoundHandler.getRandomSound();
+            
+            // Play it instantly without reading from disk
+            SoundHandler.playSound(targetNote);
         });
         
         btnHome.addActionListener(e -> {

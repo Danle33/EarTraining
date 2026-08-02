@@ -6,6 +6,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class StyledButton extends JButton implements RelativeComponent {
+	
+	private int intervalIndex = -1;
+	
     private Color currentBg = Colors.BTN_DEFAULT;
     private Color normalBg = Colors.BTN_DEFAULT;
     private Color hoverBg = Colors.BTN_HOVER;
@@ -40,7 +43,21 @@ public class StyledButton extends JButton implements RelativeComponent {
         });
     }
     
-    public void disableHoverPainting() {
+    
+    
+    public int getIntervalIndex() {
+		return intervalIndex;
+	}
+
+
+
+	public void setIntervalIndex(int intervalIndex) {
+		this.intervalIndex = intervalIndex;
+	}
+
+
+
+	public void disableHoverPainting() {
     	hoverBg = normalBg;
     }
     

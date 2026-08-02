@@ -11,12 +11,8 @@ public class Main {
 		// TODO Auto-generated method stub
 		SwingUtilities.invokeLater(() -> {
 			SoundHandler.init();
-			
-			SoundHandler.preLoadSounds("Assets");
 			SoundHandler.preLoadSounds("Assets/Piano");
 			
-			SoundHandler.AudioSample silence = SoundHandler.getSilence();
-			SoundHandler.playSound(silence);
             MainFrame frame = new MainFrame();
             
             frame.setVisible(true);

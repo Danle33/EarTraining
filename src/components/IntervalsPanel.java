@@ -11,16 +11,34 @@ import javax.sound.sampled.Clip;
 import javax.swing.*;
 
 public class IntervalsPanel extends JPanel {
+	MainFrame mainFrame = null;
+	
     private StyledButton btnPlay;
     private StyledButton btnHome;
     private StyledButton btnNext;
     private StyledButton btnPiano, btnGuitar;
+    
     private JCheckBox chkboxSequencially;
+    private JCheckBox chkboxSameOctave;
+    
     private StyledLabel lblScore;
     
     private List<StyledButton> intervalButtons = new ArrayList<StyledButton>();
+    
+    private SoundHandler.AudioSample note1 = null;
+    private SoundHandler.AudioSample note2 = null;
+    
+    private int currentNoteDistance = -1;
+    
+    private int numOfTries = 0;
+    private int numOfCorrect = 0;
+    
+    // User can spam guesses until correct but they will not count
+    private boolean validChoice = true;
 
     public IntervalsPanel(MainFrame mainFrame) {
+    	this.mainFrame = mainFrame;
+    	
         setLayout(null);
         setBackground(Colors.BG_DARK);
         
@@ -51,11 +69,19 @@ public class IntervalsPanel extends JPanel {
         chkboxSequencially.setForeground(Color.WHITE);
         chkboxSequencially.setBackground(getBackground());
         
+        chkboxSameOctave = new JCheckBox("Same octave");
+        chkboxSameOctave.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        chkboxSameOctave.setFocusPainted(false);
+        chkboxSameOctave.setForeground(Color.WHITE);
+        chkboxSameOctave.setBackground(getBackground());
+        
+        intervalButtons.add(new StyledButton("Unison"));
         intervalButtons.add(new StyledButton("Minor 2nd"));
         intervalButtons.add(new StyledButton("Major 2nd"));
         intervalButtons.add(new StyledButton("Minor 3rd"));
         intervalButtons.add(new StyledButton("Major 3rd"));
         intervalButtons.add(new StyledButton("4th"));
+        intervalButtons.add(new StyledButton("Tritone"));
         intervalButtons.add(new StyledButton("5th"));
         intervalButtons.add(new StyledButton("Minor 6th"));
         intervalButtons.add(new StyledButton("Major 6th"));
@@ -75,25 +101,83 @@ public class IntervalsPanel extends JPanel {
         add(btnPiano);
         add(btnGuitar);
         add(chkboxSequencially);
+        add(chkboxSameOctave);
         add(lblScore);
+        
+        setupListeners();
+
+    }
+    
+    private void setupListeners() {
+    	for (int i = 0; i < intervalButtons.size(); i++) {
+            StyledButton btn = intervalButtons.get(i);
+            btn.setIntervalIndex(i);
+
+            btn.addActionListener(e -> {
+                if (note1 == null || note2 == null) return;
+                
+                validChoice = false;
+                
+                int selectedIndex = btn.getIntervalIndex();
+                if (currentNoteDistance == selectedIndex
+                		|| 12 - currentNoteDistance == selectedIndex) {
+                	
+                	// mark green and proceed
+                	numOfCorrect++;
+                    btn.markCorrect();
+                    
+                    Timer timer = new Timer(300, event -> {
+                        btn.resetStyle();
+                        handleNext();
+                    });
+                    
+                    timer.setRepeats(false);
+                    timer.start();
+                }
+                else {
+                	// blink red
+                	
+                    btn.markWrong();
+
+                    Timer timer = new Timer(300, event -> {
+                        btn.resetStyle();
+                    });
+                    
+                    timer.setRepeats(false);
+                    timer.start();
+                }
+            });
+        }
 
         btnPlay.addActionListener(e -> {
-        	SoundHandler.AudioSample targetNote = SoundHandler.getRandomSound();
-            
-            // Play it instantly without reading from disk
-            SoundHandler.playSound(targetNote);
+        	if (note1 == null && note2 == null) {
+        		note1 = SoundHandler.getRandomSound();
+        		if (!chkboxSameOctave.isSelected()) {
+        			note2 = SoundHandler.getRandomSound();
+        		}
+        		else {
+        			note2 = SoundHandler.getRandomSound(note1, true);
+        		}
+            	
+            	currentNoteDistance = SoundHandler.getNotesDistance(note1, note2);
+            	
+        	}
+        	
+        	playInterval(note1, note2);
         });
         
         btnHome.addActionListener(e -> {
+        	resetPlaybackState();
         	mainFrame.showScreen(new HomePanel(mainFrame));
         });
         
-        btnHome.addActionListener(e -> {
+        btnNext.addActionListener(e -> {
         	handleNext();
         });
         
         btnPiano.addActionListener(e -> {
             if (!btnPiano.markedCorrect()) {
+            	SoundHandler.stopPlayback();
             	btnPiano.markCorrect();
             	btnGuitar.resetStyle();
             }
@@ -101,19 +185,36 @@ public class IntervalsPanel extends JPanel {
         
         btnGuitar.addActionListener(e -> {
             if (!btnGuitar.markedCorrect()) {
+            	SoundHandler.stopPlayback();
             	btnGuitar.markCorrect();
             	btnPiano.resetStyle();
             }
         });
         
         chkboxSequencially.addActionListener(e -> {
-            if (chkboxSequencially.isSelected()) {
-                
-            } else {
-                
-            }
+        	SoundHandler.stopPlayback();
         });
+        
+        chkboxSameOctave.addActionListener(e -> {
+        	resetPlaybackState();
+        });
+		
+	}
 
+	private void playInterval(SoundHandler.AudioSample note1, SoundHandler.AudioSample note2) {
+    	if (!chkboxSequencially.isSelected()) {
+    		SoundHandler.playSound(note1);
+    		SoundHandler.playSound(note2);
+    	}
+    	else {
+    		SoundHandler.playSound(note1);
+    		Timer t = new javax.swing.Timer(500, e -> {
+    			SoundHandler.playSound(note2);
+    		});
+    		
+    		t.setRepeats(false);
+    		t.start();
+    	}
     }
     
     /**
@@ -131,7 +232,8 @@ public class IntervalsPanel extends JPanel {
         int chkX = (getWidth() - chkWidth) / 2 + 8;
         int chkY = (int) (getHeight() * 0.21);
         
-        chkboxSequencially.setBounds(chkX, chkY, chkWidth, chkHeight);
+        chkboxSequencially.setBounds(chkX, chkY - 20, chkWidth, chkHeight);
+        chkboxSameOctave.setBounds(chkX, chkY + 20, chkWidth, chkHeight);
         
         btnPlay.setRelativeProperties(50, 12, 32, 6);
         
@@ -152,52 +254,58 @@ public class IntervalsPanel extends JPanel {
         		btnInstrumentWidth,
         		btnInstrumentHeight);
         
-        int firstRowN = 4;
-        int secondRowN = 4;
-        int thirdRowN = 3;
+        int[] rowCounts = {3, 3, 4, 3}; 
 
         int buttonHeight = getHeight() / 18;
-        int startY = getHeight() / 2 + getHeight() / 20;
+        int startY = getHeight() / 2 + 15;
 
-        double row1ButtonWidth = (double) getWidth() / firstRowN;
-        for (int i = 0; i < firstRowN; i++) {
-            intervalButtons.get(i).setAbsoluteProperties(
-                row1ButtonWidth * i + row1ButtonWidth / 2, 
-                startY, 
-                row1ButtonWidth, 
-                buttonHeight
-            );
-        }
+        int currentIndex = 0;
 
-        int row2Start = firstRowN;
-        int row2End = firstRowN + secondRowN;
-        double row2ButtonWidth = (double) getWidth() / secondRowN;
+        for (int rowIndex = 0; rowIndex < rowCounts.length; rowIndex++) {
+            int countInRow = rowCounts[rowIndex];
+            if (countInRow <= 0) continue;
 
-        for (int i = row2Start; i < row2End; i++) {
-            intervalButtons.get(i).setAbsoluteProperties(
-                row2ButtonWidth * (i - row2Start) + row2ButtonWidth / 2,
-                startY + buttonHeight, 
-                row2ButtonWidth, 
-                buttonHeight
-            );
-        }
+            double buttonWidth = (double) getWidth() / countInRow;
+            int currentY = startY + (buttonHeight * rowIndex);
 
-        int row3Start = firstRowN + secondRowN;
-        int row3End = intervalButtons.size();
-        double row3ButtonWidth = (double) getWidth() / thirdRowN;
+            for (int col = 0; col < countInRow; col++) {
+                // Guard against IndexOutOfBounds if rowCounts sum exceeds list size
+                if (currentIndex >= intervalButtons.size()) break;
 
-        for (int i = row3Start; i < row3End; i++) {
-            intervalButtons.get(i).setAbsoluteProperties(
-                row3ButtonWidth * (i - row3Start) + row3ButtonWidth / 2,
-                startY + (buttonHeight * 2), 
-                row3ButtonWidth, 
-                buttonHeight
-            );
+                double centerX = (buttonWidth * col) + (buttonWidth / 2.0);
+
+                intervalButtons.get(currentIndex).setAbsoluteProperties(
+                    centerX,
+                    currentY,
+                    buttonWidth,
+                    buttonHeight
+                );
+
+                currentIndex++;
+            }
         }
         
     }
     
+    private void resetPlaybackState() {
+    	SoundHandler.stopPlayback();
+    	note1 = null;
+    	note2 = null;
+    	for (StyledButton btn : intervalButtons) {
+    		btn.resetStyle();
+    	}
+    }
+    
     private void handleNext() {
+    	if (note1 == null && note2 == null)
+    		return;
     	
+    	numOfTries++;
+    	
+    	resetPlaybackState();
+    	
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("Your score: ").append(numOfCorrect).append("/").append(numOfTries);
+    	lblScore.setText(sb.toString());
     }
 }

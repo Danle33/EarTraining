@@ -22,7 +22,8 @@ mkdir bin
 dir /s /b src\*.java > sources.txt
 javac -d bin @sources.txt
 del sources.txt
-java -cp bin driver.Main```
+java -cp bin driver.Main
+```
 
 #### **Windows (PowerShell)**
 mkdir bin -Force

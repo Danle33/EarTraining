@@ -23,8 +23,3 @@ dir /s /b src\*.java > sources.txt
 javac -d bin @sources.txt
 del sources.txt
 java -cp bin driver.Main
-
-#### **Windows (Command Prompt / `cmd.exe`)**
-mkdir bin -Force
-javac -d bin (Get-ChildItem -Recurse src/*.java)
-java -cp bin driver.Main

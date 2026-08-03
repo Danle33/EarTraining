@@ -29,7 +29,7 @@ public class HomePanel extends JPanel {
         });
 
         btnNoteMode.addActionListener(e -> {
-            // mainFrame.showScreen(new NotePanel(mainFrame));
+            mainFrame.showScreen(new NotePanel(mainFrame));
         });
     }
     

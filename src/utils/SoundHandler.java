@@ -38,6 +38,7 @@ public class SoundHandler {
     }
 
     public static void preLoadSounds(String folderPath) {
+    	samplePool.clear();
         File folder = new File(folderPath);
         File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".wav"));
 
@@ -185,5 +186,9 @@ public class SoundHandler {
 	    }
 	    
 	    return -1;
+	}
+
+	public static int getNoteIndex(AudioSample note) {
+		return notesMap.get(extractNoteName(note.fileName)) - 1;
 	}
 }

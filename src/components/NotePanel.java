@@ -10,7 +10,7 @@ import java.util.List;
 import javax.sound.sampled.Clip;
 import javax.swing.*;
 
-public class IntervalsPanel extends JPanel {
+public class NotePanel extends JPanel {
 	MainFrame mainFrame = null;
 	
     private StyledButton btnPlay;
@@ -25,10 +25,9 @@ public class IntervalsPanel extends JPanel {
     
     private List<StyledButton> choiceButtons = new ArrayList<StyledButton>();
     
-    private SoundHandler.AudioSample note1 = null;
-    private SoundHandler.AudioSample note2 = null;
+    private SoundHandler.AudioSample note = null;
     
-    private int currentNoteDistance = -1;
+    private int noteIndex = -1;
     
     private int numOfTries = 0;
     private int numOfCorrect = 0;
@@ -38,7 +37,7 @@ public class IntervalsPanel extends JPanel {
     
     private Timer sequentialAudioTimer = null; // Track scheduled second note
 
-    public IntervalsPanel(MainFrame mainFrame) {
+    public NotePanel(MainFrame mainFrame) {
     	this.mainFrame = mainFrame;
     	
     	SoundHandler.preLoadSounds("Assets/Piano");
@@ -72,26 +71,27 @@ public class IntervalsPanel extends JPanel {
         chkboxSequencially.setFocusPainted(false);
         chkboxSequencially.setForeground(Color.WHITE);
         chkboxSequencially.setBackground(getBackground());
+        chkboxSequencially.setVisible(false);
         
         chkboxSameOctave = new JCheckBox("Same octave");
         chkboxSameOctave.setFont(new Font("SansSerif", Font.PLAIN, 16));
         chkboxSameOctave.setFocusPainted(false);
         chkboxSameOctave.setForeground(Color.WHITE);
         chkboxSameOctave.setBackground(getBackground());
+        chkboxSameOctave.setVisible(false);
         
-        choiceButtons.add(new StyledButton("Unison"));
-        choiceButtons.add(new StyledButton("Minor 2nd"));
-        choiceButtons.add(new StyledButton("Major 2nd"));
-        choiceButtons.add(new StyledButton("Minor 3rd"));
-        choiceButtons.add(new StyledButton("Major 3rd"));
-        choiceButtons.add(new StyledButton("4th"));
-        choiceButtons.add(new StyledButton("Tritone"));
-        choiceButtons.add(new StyledButton("5th"));
-        choiceButtons.add(new StyledButton("Minor 6th"));
-        choiceButtons.add(new StyledButton("Major 6th"));
-        choiceButtons.add(new StyledButton("Minor 7th"));
-        choiceButtons.add(new StyledButton("Major 7th"));
-        choiceButtons.add(new StyledButton("Octave"));
+        choiceButtons.add(new StyledButton("C"));
+        choiceButtons.add(new StyledButton("C#"));
+        choiceButtons.add(new StyledButton("D"));
+        choiceButtons.add(new StyledButton("D#"));
+        choiceButtons.add(new StyledButton("E"));
+        choiceButtons.add(new StyledButton("F"));
+        choiceButtons.add(new StyledButton("F#"));
+        choiceButtons.add(new StyledButton("G"));
+        choiceButtons.add(new StyledButton("G#"));
+        choiceButtons.add(new StyledButton("A"));
+        choiceButtons.add(new StyledButton("A#"));
+        choiceButtons.add(new StyledButton("B"));
         
         for (StyledButton intervalButton : choiceButtons) {
         	intervalButton.setFontSize(13);
@@ -104,8 +104,8 @@ public class IntervalsPanel extends JPanel {
         add(btnNext);
         add(btnPiano);
         add(btnGuitar);
-        add(chkboxSequencially);
-        add(chkboxSameOctave);
+        //add(chkboxSequencially);
+        //add(chkboxSameOctave);
         add(lblScore);
         
         setupListeners();
@@ -118,13 +118,11 @@ public class IntervalsPanel extends JPanel {
             btn.setIntervalIndex(i);
 
             btn.addActionListener(e -> {
-                if (note1 == null || note2 == null) return;
+                if (note == null) return;
                 
                 
                 int selectedIndex = btn.getIntervalIndex();
-                if (currentNoteDistance == selectedIndex
-                		|| (12 - currentNoteDistance == selectedIndex
-                		&& !chkboxSameOctave.isSelected())) {
+                if (noteIndex == selectedIndex) {
                 	
                 	// mark green and proceed
                 	if (validChoice)
@@ -157,20 +155,14 @@ public class IntervalsPanel extends JPanel {
         }
 
         btnPlay.addActionListener(e -> {
-        	if (note1 == null && note2 == null) {
-        		note1 = SoundHandler.getRandomSound();
-        		if (!chkboxSameOctave.isSelected()) {
-        			note2 = SoundHandler.getRandomSound();
-        		}
-        		else {
-        			note2 = SoundHandler.getRandomSound(note1, true);
-        		}
+        	if (note == null) {
+        		note = SoundHandler.getRandomSound();
             	
-            	currentNoteDistance = SoundHandler.getNotesDistance(note1, note2);
+            	noteIndex = SoundHandler.getNoteIndex(note);
             	
         	}
         	
-        	playInterval(note1, note2);
+        	playNote(note);
         });
         
         btnHome.addActionListener(e -> {
@@ -184,9 +176,6 @@ public class IntervalsPanel extends JPanel {
         
         btnPiano.addActionListener(e -> {
             if (!btnPiano.markedCorrect()) {
-            	if (sequentialAudioTimer != null && sequentialAudioTimer.isRunning()) {
-                    sequentialAudioTimer.stop();
-                }
                 resetPlaybackState();
                 SoundHandler.preLoadSounds("Assets/Piano");
             	btnPiano.markCorrect();
@@ -196,47 +185,17 @@ public class IntervalsPanel extends JPanel {
         
         btnGuitar.addActionListener(e -> {
             if (!btnGuitar.markedCorrect()) {
-            	if (sequentialAudioTimer != null && sequentialAudioTimer.isRunning()) {
-                    sequentialAudioTimer.stop();
-                }
             	resetPlaybackState();
                 SoundHandler.preLoadSounds("Assets/Guitar");
             	btnGuitar.markCorrect();
             	btnPiano.resetStyle();
             }
         });
-        
-        chkboxSequencially.addActionListener(e -> {
-        	if (sequentialAudioTimer != null && sequentialAudioTimer.isRunning()) {
-                sequentialAudioTimer.stop();
-            }
-            SoundHandler.stopPlayback();
-        });
-        
-        chkboxSameOctave.addActionListener(e -> {
-        	resetPlaybackState();
-        });
 		
 	}
 
-    private void playInterval(SoundHandler.AudioSample note1, SoundHandler.AudioSample note2) {
-        if (sequentialAudioTimer != null && sequentialAudioTimer.isRunning()) {
-            sequentialAudioTimer.stop();
-        }
-
-        if (!chkboxSequencially.isSelected()) {
-            SoundHandler.playSound(note1);
-            SoundHandler.playSound(note2);
-        } else {
-            SoundHandler.playSound(note1);
-            
-            sequentialAudioTimer = new Timer(500, e -> {
-                SoundHandler.playSound(note2);
-            });
-            
-            sequentialAudioTimer.setRepeats(false);
-            sequentialAudioTimer.start();
-        }
+    private void playNote(SoundHandler.AudioSample note) {
+        SoundHandler.playSound(note);
     }
     
     /**
@@ -276,7 +235,7 @@ public class IntervalsPanel extends JPanel {
         		btnInstrumentWidth,
         		btnInstrumentHeight);
         
-        int[] rowCounts = {3, 3, 4, 3}; 
+        int[] rowCounts = {4, 4, 4}; 
 
         int buttonHeight = getHeight() / 18;
         int startY = getHeight() / 2 + 15;
@@ -310,21 +269,16 @@ public class IntervalsPanel extends JPanel {
     }
     
     private void resetPlaybackState() {
-        // Stop any pending delayed note from triggering
-        if (sequentialAudioTimer != null && sequentialAudioTimer.isRunning()) {
-            sequentialAudioTimer.stop();
-        }
         
         SoundHandler.stopPlayback();
-        note1 = null;
-        note2 = null;
+        note = null;
         for (StyledButton btn : choiceButtons) {
             btn.resetStyle();
         }
     }
     
     private void handleNext() {
-    	if (note1 == null && note2 == null)
+    	if (note == null)
     		return;
     	
     	numOfTries++;

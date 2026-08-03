@@ -26,11 +26,15 @@ java -cp bin driver.Main
 ```
 
 #### **Windows (PowerShell)**
+```cmd
 mkdir bin -Force
 javac -d bin (Get-ChildItem -Recurse src/*.java)
 java -cp bin driver.Main
+```
 
 #### **macOS / Linux**
+```cmd
 mkdir -p bin
 javac -d bin $(find src -name "*.java")
 java -cp bin driver.Main
+```

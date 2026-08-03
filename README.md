@@ -4,6 +4,8 @@ A lightweight Java Swing application designed for ear training. App allows users
 
 ## How to Run
 
+Requirement: JDK (Java Development Kit) 17+
+
 ### Option 1: Run via IDE (Eclipse, IntelliJ IDEA, VS Code)
 
 1. **Clone or Download** this repository.

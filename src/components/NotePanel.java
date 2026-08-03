@@ -35,6 +35,8 @@ public class NotePanel extends JPanel {
     // User can spam guesses until correct but they will not count
     private boolean validChoice = true;
     
+    private boolean isTransitioning = false;
+    
     private Timer sequentialAudioTimer = null; // Track scheduled second note
 
     public NotePanel(MainFrame mainFrame) {
@@ -120,23 +122,23 @@ public class NotePanel extends JPanel {
             btn.setIntervalIndex(i);
 
             btn.addActionListener(e -> {
-                if (note == null) return;
-                
-                
+            	if (isTransitioning || note == null) return;
+
                 int selectedIndex = btn.getIntervalIndex();
                 if (noteIndex == selectedIndex) {
-                	
-                	// mark green and proceed
-                	if (validChoice) {
-                		numOfCorrect++;
-                		SoundHandler.playSound(SoundHandler.getSoundCorrect());               	
-                	}
-                	
+                    isTransitioning = true; // Lock UI during green highlight delay
+                    
+                    if (validChoice) {
+                        numOfCorrect++;
+                        SoundHandler.playSound(SoundHandler.getSoundCorrect());                
+                    }
+                    
                     btn.markCorrect();
                     
                     Timer timer = new Timer(350, event -> {
                         btn.resetStyle();
                         handleNext();
+                        isTransitioning = false; // Unlock UI for next note
                     });
                     
                     timer.setRepeats(false);
@@ -207,14 +209,6 @@ public class NotePanel extends JPanel {
         super.doLayout();
         
         lblScore.setRelativeProperties(50, 79, 80, 10);
-        
-        int chkWidth = 200;
-        int chkHeight = 30;
-        int chkX = (getWidth() - chkWidth) / 2 + 8;
-        int chkY = (int) (getHeight() * 0.21);
-        
-        chkboxSequencially.setBounds(chkX, chkY - 20, chkWidth, chkHeight);
-        chkboxSameOctave.setBounds(chkX, chkY + 20, chkWidth, chkHeight);
         
         btnPlay.setRelativeProperties(50, 12, 32, 6);
         

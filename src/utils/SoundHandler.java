@@ -6,8 +6,75 @@ import java.util.*;
 
 public class SoundHandler {
 
-    // Simple container for cached note data in RAM
-    public record AudioSample(byte[] pcmData, AudioFormat format, String fileName) {}
+    // Container for cached note data in RAM
+	public static class AudioSample {
+	    private final byte[] pcmData;
+	    private final AudioFormat format;
+	    private final String fileName;
+	    
+	    // Pool of Clips for overlapping/rapid playback
+	    private final Clip[] clipPool;
+	    private int currentClipIndex = 0;
+	    private static final int POOL_SIZE = 6; 
+
+	    public AudioSample(byte[] pcmData, AudioFormat format, String fileName) {
+	        this.pcmData = pcmData;
+	        this.format = format;
+	        this.fileName = fileName;
+	        this.clipPool = new Clip[POOL_SIZE];
+	        initClipPool();
+	    }
+
+	    private void initClipPool() {
+	        for (int i = 0; i < POOL_SIZE; i++) {
+	            try {
+	                Clip clip = AudioSystem.getClip();
+	                AudioInputStream ais = new AudioInputStream(
+	                    new java.io.ByteArrayInputStream(pcmData),
+	                    format,
+	                    pcmData.length / format.getFrameSize()
+	                );
+	                clip.open(ais);
+	                clipPool[i] = clip;
+	            } catch (Exception e) {
+	                e.printStackTrace();
+	            }
+	        }
+	    }
+
+	    public String getFileName() { return fileName; }
+
+	    public synchronized void play() {
+	        Clip clip = clipPool[currentClipIndex];
+	        if (clip != null) {
+	            if (clip.isRunning()) {
+	                clip.stop();
+	            }
+	            clip.flush(); 
+	            clip.setFramePosition(0); 
+	            clip.start(); 
+	            
+	            currentClipIndex = (currentClipIndex + 1) % POOL_SIZE;
+	        }
+	    }
+	    
+	    public void close() {
+	        for (Clip clip : clipPool) {
+	            if (clip != null) {
+	                if (clip.isRunning()) clip.stop();
+	                clip.close();
+	            }
+	        }
+	    }
+
+	    public synchronized void stop() {
+	        for (Clip clip : clipPool) {
+	            if (clip != null && clip.isRunning()) {
+	                clip.stop();
+	            }
+	        }
+	    }
+	}
 
     private static final List<AudioSample> samplePool = new ArrayList<>();
     
@@ -52,6 +119,9 @@ public class SoundHandler {
     
     // Preloads note sounds to a sample pool
     public static void preLoadSounds(String folderPath) {
+    	for (AudioSample sample : samplePool) {
+            sample.close();
+        }
     	samplePool.clear();
         File folder = new File(folderPath);
         File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".wav"));
@@ -144,49 +214,12 @@ public class SoundHandler {
 
     public static void playSound(AudioSample sample) {
         if (sample == null) return;
-
-        new Thread(() -> {
-            try {
-                Clip clip = AudioSystem.getClip();
-                AudioInputStream ais = new AudioInputStream(
-                        new java.io.ByteArrayInputStream(sample.pcmData()),
-                        sample.format(),
-                        sample.pcmData().length / sample.format().getFrameSize()
-                );
-
-                clip.open(ais);
-                
-                activeClips.add(clip);
-
-                // Let the line close itself asynchronously when playback finishes
-                clip.addLineListener(event -> {
-                    if (LineEvent.Type.STOP.equals(event.getType())) {
-                        activeClips.remove(clip);
-                        clip.close(); 
-                    }
-                });
-
-                clip.start();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
+        sample.play(); // Triggers directly without thread overhead
     }
 
-    /**
-     * Halts active audio output instantly (0ms delay) without blocking hardware lines.
-     */
     public static void stopPlayback() {
-        synchronized (activeClips) {
-            for (Clip clip : activeClips) {
-                try {
-                    if (clip.isRunning()) {
-                        clip.stop(); // Halts sound output instantly without closing line synchronously
-                    }
-                } catch (Exception ignored) {}
-            }
-            // LineListener will handle activeClips.remove() and clip.close() automatically
+        for (AudioSample sample : samplePool) {
+            sample.stop();
         }
     }
 

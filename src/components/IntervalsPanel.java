@@ -36,6 +36,8 @@ public class IntervalsPanel extends JPanel {
     // User can spam guesses until correct but they will not count
     private boolean validChoice = true;
     
+    private boolean isTransitioning = false;
+    
     private Timer sequentialAudioTimer = null; // Track scheduled second note
 
     public IntervalsPanel(MainFrame mainFrame) {
@@ -120,7 +122,7 @@ public class IntervalsPanel extends JPanel {
             btn.setIntervalIndex(i);
 
             btn.addActionListener(e -> {
-                if (note1 == null || note2 == null) return;
+                if (isTransitioning || note1 == null || note2 == null) return;
                 
                 
                 int selectedIndex = btn.getIntervalIndex();
@@ -128,10 +130,12 @@ public class IntervalsPanel extends JPanel {
                 		|| (12 - currentNoteDistance == selectedIndex
                 		&& !chkboxSameOctave.isSelected())) {
                 	
+                	isTransitioning = true; // Lock UI during green highlight delay
+                	
                 	// mark green and proceed
                 	if (validChoice) {
                 		numOfCorrect++;
-                		SoundHandler.playSound(SoundHandler.getSoundCorrect());               	
+                		SoundHandler.playSound(SoundHandler.getSoundCorrect());  
                 	}
                 	
                     btn.markCorrect();
@@ -139,6 +143,7 @@ public class IntervalsPanel extends JPanel {
                     Timer timer = new Timer(300, event -> {
                         btn.resetStyle();
                         handleNext();
+                        isTransitioning = false; // Unlock UI for next note
                     });
                     
                     timer.setRepeats(false);

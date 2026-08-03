@@ -1,6 +1,6 @@
 # Simple Ear Trainer
 
-A lightweight Java Swing application designed for ear training. App allows users to switch between piano and guitar, choose same octave mode and change the timing of the notes.
+A lightweight Java Swing application designed for ear training. App allows users to switch between piano and guitar, choose same octave mode and change timing of the notes.
 
 ## How to Run
 

@@ -108,6 +108,8 @@ public class IntervalsPanel extends JPanel {
         add(chkboxSameOctave);
         add(lblScore);
         
+        getNotes();
+        
         setupListeners();
 
     }
@@ -127,8 +129,10 @@ public class IntervalsPanel extends JPanel {
                 		&& !chkboxSameOctave.isSelected())) {
                 	
                 	// mark green and proceed
-                	if (validChoice)
+                	if (validChoice) {
                 		numOfCorrect++;
+                		SoundHandler.playSound(SoundHandler.getSoundCorrect());               	
+                	}
                 	
                     btn.markCorrect();
                     
@@ -157,18 +161,6 @@ public class IntervalsPanel extends JPanel {
         }
 
         btnPlay.addActionListener(e -> {
-        	if (note1 == null && note2 == null) {
-        		note1 = SoundHandler.getRandomSound();
-        		if (!chkboxSameOctave.isSelected()) {
-        			note2 = SoundHandler.getRandomSound();
-        		}
-        		else {
-        			note2 = SoundHandler.getRandomSound(note1, true);
-        		}
-            	
-            	currentNoteDistance = SoundHandler.getNotesDistance(note1, note2);
-            	
-        	}
         	
         	playInterval(note1, note2);
         });
@@ -189,6 +181,7 @@ public class IntervalsPanel extends JPanel {
                 }
                 resetPlaybackState();
                 SoundHandler.preLoadSounds("Assets/Piano");
+                getNotes();
             	btnPiano.markCorrect();
             	btnGuitar.resetStyle();
             }
@@ -201,6 +194,7 @@ public class IntervalsPanel extends JPanel {
                 }
             	resetPlaybackState();
                 SoundHandler.preLoadSounds("Assets/Guitar");
+                getNotes();
             	btnGuitar.markCorrect();
             	btnPiano.resetStyle();
             }
@@ -215,6 +209,7 @@ public class IntervalsPanel extends JPanel {
         
         chkboxSameOctave.addActionListener(e -> {
         	resetPlaybackState();
+        	getNotes();
         });
 		
 	}
@@ -323,13 +318,28 @@ public class IntervalsPanel extends JPanel {
         }
     }
     
+    private void getNotes() {
+    	if (note1 == null && note2 == null) {
+    		note1 = SoundHandler.getRandomSound();
+    		if (!chkboxSameOctave.isSelected()) {
+    			note2 = SoundHandler.getRandomSound();
+    		}
+    		else {
+    			note2 = SoundHandler.getRandomSound(note1, true);
+    		}
+        	
+        	currentNoteDistance = SoundHandler.getNotesDistance(note1, note2);
+        	
+    	}
+    }
+    
     private void handleNext() {
-    	if (note1 == null && note2 == null)
-    		return;
     	
     	numOfTries++;
     	
     	resetPlaybackState();
+    	
+    	getNotes();
     	
     	StringBuilder sb = new StringBuilder();
     	sb.append("Your score: ").append(numOfCorrect).append("/").append(numOfTries);

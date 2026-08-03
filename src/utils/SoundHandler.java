@@ -13,6 +13,8 @@ public class SoundHandler {
     
     private static final Map<String, Integer> notesMap = new HashMap<String, Integer>();
     
+    private static AudioSample soundCorrect = null;
+    
     static {
     	notesMap.put("C", 1);
     	notesMap.put("C#", 2);
@@ -32,11 +34,23 @@ public class SoundHandler {
     private static final Set<Clip> activeClips = Collections.synchronizedSet(new HashSet<>());
     
     private static final Random random = new Random();
+    
+    
 
-    public static void init() {
+    public static AudioSample getSoundCorrect() {
+		return soundCorrect;
+	}
+
+	public static void setSoundCorrect(AudioSample soundCorrect) {
+		SoundHandler.soundCorrect = soundCorrect;
+	}
+
+	public static void init() {
+    	soundCorrect = loadSound("Assets/soundCorrect.wav");
         startAudioKeepAlive();
     }
-
+    
+    // Preloads note sounds to a sample pool
     public static void preLoadSounds(String folderPath) {
     	samplePool.clear();
         File folder = new File(folderPath);
@@ -59,6 +73,27 @@ public class SoundHandler {
                 e.printStackTrace();
             }
         }
+    }
+    
+    private static AudioSample loadSound(String filePath) {
+        File file = new File(filePath);
+
+        if (!file.exists()) {
+            System.err.println("Audio file not found: " + filePath);
+            return null;
+        }
+
+        try (AudioInputStream ais = AudioSystem.getAudioInputStream(file)) {
+            AudioFormat format = ais.getFormat();
+            byte[] data = ais.readAllBytes();
+            
+            return new AudioSample(data, format, file.getName());
+        } catch (Exception e) {
+            System.err.println("Failed to load sound sample: " + filePath);
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     public static AudioSample getRandomSound() {

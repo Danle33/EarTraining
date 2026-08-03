@@ -108,6 +108,8 @@ public class NotePanel extends JPanel {
         //add(chkboxSameOctave);
         add(lblScore);
         
+        getNote();
+        
         setupListeners();
 
     }
@@ -125,12 +127,14 @@ public class NotePanel extends JPanel {
                 if (noteIndex == selectedIndex) {
                 	
                 	// mark green and proceed
-                	if (validChoice)
+                	if (validChoice) {
                 		numOfCorrect++;
+                		SoundHandler.playSound(SoundHandler.getSoundCorrect());               	
+                	}
                 	
                     btn.markCorrect();
                     
-                    Timer timer = new Timer(300, event -> {
+                    Timer timer = new Timer(350, event -> {
                         btn.resetStyle();
                         handleNext();
                     });
@@ -155,13 +159,7 @@ public class NotePanel extends JPanel {
         }
 
         btnPlay.addActionListener(e -> {
-        	if (note == null) {
-        		note = SoundHandler.getRandomSound();
-            	
-            	noteIndex = SoundHandler.getNoteIndex(note);
-            	
-        	}
-        	
+
         	playNote(note);
         });
         
@@ -178,6 +176,7 @@ public class NotePanel extends JPanel {
             if (!btnPiano.markedCorrect()) {
                 resetPlaybackState();
                 SoundHandler.preLoadSounds("Assets/Piano");
+                getNote();
             	btnPiano.markCorrect();
             	btnGuitar.resetStyle();
             }
@@ -187,6 +186,7 @@ public class NotePanel extends JPanel {
             if (!btnGuitar.markedCorrect()) {
             	resetPlaybackState();
                 SoundHandler.preLoadSounds("Assets/Guitar");
+                getNote();
             	btnGuitar.markCorrect();
             	btnPiano.resetStyle();
             }
@@ -268,6 +268,14 @@ public class NotePanel extends JPanel {
         
     }
     
+    private void getNote() {
+    	if (note == null) {
+    		note = SoundHandler.getRandomSound();
+        	
+        	noteIndex = SoundHandler.getNoteIndex(note);
+    	}
+    }
+    
     private void resetPlaybackState() {
         
         SoundHandler.stopPlayback();
@@ -278,12 +286,12 @@ public class NotePanel extends JPanel {
     }
     
     private void handleNext() {
-    	if (note == null)
-    		return;
     	
     	numOfTries++;
     	
     	resetPlaybackState();
+    	
+    	getNote();
     	
     	StringBuilder sb = new StringBuilder();
     	sb.append("Your score: ").append(numOfCorrect).append("/").append(numOfTries);

@@ -42,7 +42,7 @@ public class HomePanel extends JPanel {
         super.doLayout();
         
         lblTitle.setRelativeProperties(50, 10, 80, 10);
-        btnIntervalMode.setRelativeProperties(50, 43, 50, 8);
-        btnNoteMode.setRelativeProperties(50, 57, 50, 8);
+        btnNoteMode.setRelativeProperties(50, 43, 50, 8);
+        btnIntervalMode.setRelativeProperties(50, 57, 50, 8);
     }
 }
